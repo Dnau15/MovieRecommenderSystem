@@ -107,13 +107,14 @@ class MovieDataset(Dataset):
         }
         return sample
 
+# Test dataset creating
 test_dataset = MovieDataset(
     user_ids=data.user_id.values,
     movie_ids=data.movie_id.values,
     ratings=data.rating.values,
 )
 
-
+# Creating test dataloader
 test_loader = DataLoader(
     dataset=test_dataset,
     batch_size=test_batch_size,
@@ -122,13 +123,17 @@ test_loader = DataLoader(
     drop_last=True
 )
 
+# Model creating
 model = RecommendationModel(
     n_users=943,
     n_movies=1682,
 ).to(device)
+# weight of the best model
 model_path = '../models/best_model.pth'
+#Loading weight of the best model
 model.load_state_dict(torch.load(model_path))
 
+# Loss function
 loss_func = nn.MSELoss()
 
 test_running_loss = 0
@@ -137,11 +142,13 @@ model.eval()
 test_running_loss = 0
 with torch.no_grad():
     for test_data in tqdm(test_loader):
+        # Rating computing
         output = model(
             test_data["user_ids"].to(device),
             test_data["movie_ids"].to(device)
                     )
         rating = test_data["ratings"].view(test_batch_size, -1).to(torch.float32).to(device)
+        # Computing loss
         loss = torch.sqrt(loss_func(output, rating))
         test_running_loss += loss.sum().item()
 print(f"Test loss: {test_running_loss/len(test_loader)}")
